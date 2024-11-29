@@ -1,0 +1,56 @@
+services:
+  storage:
+    image: redis
+    volumes:
+      - ./data:/data
+    networks:
+    - app-network
+
+  counter:
+    image: antonchik/counter
+    environment:
+    - PORT=3001
+    - REDIS_URL=redis://storage
+    ports:
+    - 81:3001
+    depends_on:
+    - storage
+    networks:
+      - app-network
+
+  library:
+    image: antonchik/library
+    ports:
+    - 80:3000
+    networks:
+      - app-network
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
